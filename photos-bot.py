@@ -16,72 +16,74 @@ blue = '\033[0;34m'
 bold = '\033[1m'
 
 
-def rename():
+def rename_photos():
     """Переименовывает фотографии на дату создания"""
     counter = 1  # счётчик для одноминутных кадров
     for image_name in os.listdir(folder_track):
+        image_extensions = ["png", "tiff", "jpg", "jpeg", "svg", "webp", "ico"]
         extension = image_name.split(".")[-1].lower()
-        # проверка на присутсвие расширения
         if "." not in image_name:
             continue  # поработать над подпаками здесь
-        elif extension == 'png'\
-                or extension == 'tif'\
-                or extension == 'jpg'\
-                or extension == 'svg':
+        elif extension in image_extensions:
+            full_date = get_created_date(image_name)
+            new_name = full_date + f"-{counter:0>4}." + extension  # преффикс до 4 нулей в счётчике
 
-            full_date = created_date(image_name)
-            new_name = full_date + f"-{counter:0>4}." + extension  # преффикс до 4с в счётчике
-
-            print(f'{bold}{image_name:30} - {new_name:>45}{reset}')  # посмотреть за преименованиями
-
+            print(f'{bold}{image_name:30} - {new_name:>45}{reset}')  # лог преименований
             os.rename(folder_track + image_name, folder_delivery + new_name)
             counter += 1
             if counter == 10000:
                 counter = 1
     time.sleep(0.1)  # слишком быстрая скорость сбивает счётчик
 
-
-def created_date(filename):
+def get_created_date(filename):
     """Ищет верную дату создания фотографии и
     возвращает её в формате гггг-мм-дд_чч-мм или через ':' вместо '-' """
     os.chdir(folder_track)
     try:
         create_time = Image.open(filename)._getexif()[36867]
-    except:  # отсутсвие пунката метадаты, добавить ошибку
+    except:  # отсутсвие пунката метадаты
         create_time = os.path.getmtime(filename)
         create_time = datetime.fromtimestamp(create_time)
 
-    create_time = str(create_time).replace(' ', '_')[:19]
-    return create_time
-
+    create_time_string = str(create_time).replace(' ', '_')[:19]
+    return create_time_string
 
 def ready():
     """Спрашивает, начинать ли действовать"""
     start = input('[y]es or [n]o?\n')
-    if start.lower().startswith('y'):
-        return True
-    return False
+    while True:
+        if start.lower().startswith('y'):
+            return True
+        elif start.lower().startswith('n'):
+            return False
 
+def create_dirs_if_not_exists():
+    try:
+        if not folder_track:
+                os.makedirs(folder_track)
+        if not folder_delivery:
+            os.makedirs(folder_delivery)
+    except:
+        print("Ошибка в создании папок")
 
 def main():
+    create_dirs_if_not_exists()
     try:
-        # os.mkdirs(folder_track, folder_delivery)  # для других пользователей
-        print(f'{blue}Запускаюсь..{reset} ')
-        time.sleep(1)  # lol
-
         print(f'Фотографии будут переименованы и перемещены\n'
-              f'\tотсюда {italic}{folder_track}{reset}\n'
-              f'\tсюда   {italic}{folder_delivery}{reset}')
+              f'\t отсюда {italic}{folder_track}{reset}\n'
+              f'\t сюда   {italic}{folder_delivery}{reset}')
 
+        time.sleep(2)
         if ready():
-            rename()
+            rename_photos()
+
     except FileNotFoundError:
         print("Файл не найден")
     except KeyboardInterrupt:
-        print(' Остановка через Ctrl + C')
+        print("Остановка через Ctrl + C")
     finally:
-        print(f'{blue}Завершено.{reset}')
+        print(f'{blue}Успешно завершено{reset}')
 
 
-if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
-    main()  # то запускаем функцию main()
+if __name__ == '__main__':
+    main()
