@@ -1,2 +1,4 @@
 # Photos Name By Creating Date
- Two version of the program. Rename selected photos to creating time.
+###### 3rd version. Rename photos by date and time of creation.
+
+### Just place the script in the directory you want.
