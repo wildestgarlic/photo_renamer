@@ -7,15 +7,34 @@ from PIL import Image
 
 
 class Renamer:
-    image_extensions = ["png", "tiff", "jpg", "jpeg", "svg", "webp", "ico"]
+    image_extensions = ["png", "tiff", "jpg", "jpeg", "svg", "webp"]
 
-    def __init__(self):
+    def __init__(self, infinity=False):
         self.work_dir = os.path.abspath(os.curdir)
         self.folder_to = os.path.join(self.work_dir, "to")
+        self.infinity = infinity
+
+    def go(self):
+        self.create_folder()
+        self.rename()
+        while self.infinity:
+            self.rename()
 
     def rename(self):
-        """ Переименование на дату создания
-            Фомата гггг-мм-дд_чч-мм
+        try:
+            self._rename()
+        except FileNotFoundError:
+            raise Exception("FileNotFound")
+        except KeyboardInterrupt:
+            print("Stopped")
+            sys.exit()
+        else:
+            print(f"Success")
+
+    def _rename(self):
+        """
+        Переименование на дату создания
+        Фомата гггг-мм-дд_чч-мм
         """
         for name in os.listdir(self.work_dir):
 
@@ -49,12 +68,13 @@ class Renamer:
     @staticmethod
     def _build_name(creation_date: str, suffix: str, extension: str) -> str:
         if suffix:
-            return f'{creation_date}_{suffix}.{extension}'
-        return f'{creation_date}.{extension}'
+            return f"{creation_date}_{suffix}.{extension}"
+        return f"{creation_date}.{extension}"
 
     def get_date_of_creation(self, name) -> str:
-        """ Ищет дату создания фотографии и
-            возвращает её в формате гггг-мм-дд_чч-мм
+        """
+        Ищет дату создания фотографии и
+        возвращает её в формате гггг-мм-дд_чч-мм
         """
         file = os.path.join(self.work_dir, name)
 
@@ -80,31 +100,18 @@ class Renamer:
         return creation_time
 
     def create_folder(self):
-        """ todo: path from console args
-        """
+        """todo: path from console args"""
         try:
             if not os.path.exists(self.folder_to):
                 os.makedirs(self.folder_to)
         except OSError:
-            print("Ошибка при создании папок")
-            raise
+            raise OSError("Folder creation error")
 
 
 def main():
-    renamer = Renamer()
-
-    try:
-        renamer.create_folder()
-        renamer.rename()
-
-    except FileNotFoundError:
-        raise Exception("Файл не найден")
-    except KeyboardInterrupt:
-        sys.exit()
-    finally:
-        print(f"Успешно завершено")
+    renamer = Renamer(infinity=True)
+    renamer.go()
 
 
 if __name__ == "__main__":
-    # while True:
     main()
